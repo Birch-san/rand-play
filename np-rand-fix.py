@@ -53,7 +53,7 @@ def random_spans_noise_mask(
   num_noise_spans = int(np.round(min(num_noise_tokens, num_nonnoise_tokens) / mean_noise_span_length))
 
   # avoid degeneracy by ensuring positive number of noise spans
-  num_noise_spans: int = max(num_noise_spans, 1)
+  num_noise_spans: int = max(num_noise_spans, 2)
 
   noise_span_lengths: NDArray = _random_segmentation(num_noise_tokens, num_noise_spans)
   nonnoise_span_lengths: NDArray = _random_segmentation(num_nonnoise_tokens, num_noise_spans)
