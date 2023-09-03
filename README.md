@@ -51,11 +51,18 @@ generating 10 noise masks for seq length 31:
 0 = use original token  
 1 = replace these tokens with a noise span
 
+**Problems**
+
 Notice how for `length<=30`: the random spans noise masks are not random.
 
 We also observe a bias that always places a noise span at the end of the sequence.
 
+**Do the problems matter?**
+
 The "short-length" case matters less if you intend to pack your context with multiple prompts (i.e. you can ensure a high minimum length). In my case, however, I wished to use padding instead of packing. Moreover I had a few hundred thousand prompts which were short enough to fall into this category.
+
+The "bias" case, too, arguably matters less when packing, because the tokens at the end of your context might not consistently be the end of a training sample (they may be the middle of a partial sample that was packed into the spare space in your context).  
+hence with packing: the model will still get to learn what sequence ends look like. but consistently hiding sequence ends is definitely a problem if you're padding.
 
 ## Numpy implementation from Huggingface
 
