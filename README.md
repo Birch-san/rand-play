@@ -168,7 +168,8 @@ generating 10 noise masks for seq length 30:
 
 I am not sure whether it preserves other guarantees like noise density and mean noise span length, so requires a bit more thought.
 
-It **does. however** introduce new problems (shape mismatches) at about `length<10`, so some guards will be needed. to make it safe.
+It **does. however** introduce new problems (shape mismatches) at about `length<10`, so some guards will be needed. to make it safe.  
+_Note: HF's numpy implementation explodes at `length<5` even before we worsen the problem with our patch, so we will want to put in safeguards against that situation too._
 
 ### Eliminating end-of-sequence bias
 
