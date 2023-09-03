@@ -55,6 +55,8 @@ Notice how for `length<=30`: the random spans noise masks are not random.
 
 We also observe a bias that always places a noise span at the end of the sequence.
 
+The "short-length" case matters less if you intend to pack your context with multiple prompts (i.e. you can ensure a high minimum length). In my case, however, I wished to use padding instead of packing. Moreover I had a few hundred thousand prompts which were short enough to fall into this category.
+
 ## Numpy implementation from Huggingface
 
 From [`huggingface/transformers`](https://github.com/huggingface/transformers/blob/0afa5071bd84e44301750fdc594e33db102cf374/examples/flax/language-modeling/run_t5_mlm_flax.py#L405).
