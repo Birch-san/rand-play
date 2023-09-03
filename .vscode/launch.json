@@ -6,6 +6,13 @@
       "request": "launch",
       "module": "tf-rand",
       "justMyCode": true
+    },
+    {
+      "name": "Python: Numpy rand",
+      "type": "python",
+      "request": "launch",
+      "module": "np-rand",
+      "justMyCode": true
     }
   ]
 }
