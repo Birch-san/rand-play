@@ -1,5 +1,6 @@
 from numpy.typing import NDArray
 import numpy as np
+from random import randint
 
 # pick the lengths of the noise spans and the non-noise spans
 def _random_segmentation(num_items: int, num_segments: int) -> NDArray:
@@ -67,6 +68,7 @@ def random_spans_noise_mask(
   span_num = np.cumsum(span_start_indicator)
   is_noise = np.equal(span_num % 2, 1)
   mask: NDArray = is_noise[:orig_length]
+  mask = np.roll(mask, randint(0, mask.shape[-1]-1), axis=-1)
   return mask
 
 noise_density=.15
