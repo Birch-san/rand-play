@@ -69,7 +69,6 @@ def random_spans_noise_mask(
   mask: NDArray = is_noise[:orig_length]
   return mask
 
-length=30
 noise_density=.15
 mean_noise_span_length=3.
 attempts=10
