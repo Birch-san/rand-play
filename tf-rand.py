@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow import Tensor
 import seqio
 
+# from Google Research:
+# https://github.com/google-research/text-to-text-transfer-transformer/blob/84f8bcc14b5f2c03de51bd3587609ba8f6bbd1cd/t5/data/preprocessors.py#L2682
 def random_spans_noise_mask(
   length: int,
   noise_density: float,
