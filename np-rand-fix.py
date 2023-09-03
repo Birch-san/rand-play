@@ -74,7 +74,7 @@ def random_spans_noise_mask(
 noise_density=.15
 mean_noise_span_length=3.
 attempts=10
-for length in [30, 31]:
+for length in [10]:
   print(f'generating {attempts} noise masks for seq length {length}:')
   for _ in range(attempts):
     mask = random_spans_noise_mask(length=length, noise_density=noise_density, mean_noise_span_length=mean_noise_span_length)

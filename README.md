@@ -100,9 +100,48 @@ These results have the same biases as the official Google T5  implementation.
 
 ## How do we fix it?
 
+I have written some fixes, which may have caveats, but hopefully these problems are smaller than the biases with which we began.
+
+### Setup
+
+```bash
+pip install -r requirements.np.txt
+```
+
+### Usage
+
+```bash
+python -m np-rand-fix
+```
+
+```
+generating 10 noise masks for seq length 30:
+000000000000000000000000101110
+000000000000000000001100001100
+000000011000011000000000000000
+111000000000000000010000000000
+000010000000000000000000001110
+000111000000000000000000100000
+000000001000000000000111000000
+000000000011000000110000000000
+000000000000000000000001110100
+000000000000011100000000000100
+generating 10 noise masks for seq length 31:
+0000000001100000000000011100000
+0011100000000000110000000000000
+1110110000000000000000000000000
+0000000000000011110000100000000
+1111000000000000000000000100000
+0000101111000000000000000000000
+0000000000001111000000001000000
+0001111000000000000000000000010
+0000000001100000000001110000000
+0000000000001111000000000100000
+```
+
 ### Encouraging randomness in `length<=30`
 
-One idea is:
+Proposal is:
 
 ```diff
 - # avoid degeneracy by ensuring positive number of noise spans
@@ -129,6 +168,43 @@ generating 10 noise masks for seq length 30:
 
 I am not sure whether it preserves other guarantees like noise density and mean noise span length, so requires a bit more thought.
 
+It **does. however** introduce new problems (shape mismatches) at about `length<10`, so some guards will be needed. to make it safe.
+
 ### Eliminating end-of-sequence bias
 
-No proposed solution yet; need to read the algorithm a bit more closely to understand what's causing this.
+We could roll the mask by a random offset along its row dim:
+
+```diff
+  mask: NDArray = is_noise[:orig_length]
++ mask = np.roll(mask, randint(0, mask.shape[-1]-1), axis=-1)
+  return mask
+```
+
+This fixes the end-of-sequence bias:
+
+```
+generating 10 noise masks for seq length 30:
+000000000000000000000000101110
+000000000000000000001100001100
+000000011000011000000000000000
+111000000000000000010000000000
+000010000000000000000000001110
+000111000000000000000000100000
+000000001000000000000111000000
+000000000011000000110000000000
+000000000000000000000001110100
+000000000000011100000000000100
+generating 10 noise masks for seq length 31:
+0000000001100000000000011100000
+0011100000000000110000000000000
+1110110000000000000000000000000
+0000000000000011110000100000000
+1111000000000000000000000100000
+0000101111000000000000000000000
+0000000000001111000000001000000
+0001111000000000000000000000010
+0000000001100000000001110000000
+0000000000001111000000000100000
+```
+
+Perhaps a smarter solution could be found by reading the algorithm a bit more closely to understand the root cause of the bias.
