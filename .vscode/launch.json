@@ -13,6 +13,13 @@
       "request": "launch",
       "module": "np-rand",
       "justMyCode": true
+    },
+    {
+      "name": "Python: Numpy rand (proposed fix)",
+      "type": "python",
+      "request": "launch",
+      "module": "np-rand-fix",
+      "justMyCode": true
     }
   ]
 }
