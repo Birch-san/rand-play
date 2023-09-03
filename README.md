@@ -96,7 +96,9 @@ generating 10 noise masks for seq length 31:
 0000000000000000111000000000011
 ```
 
-These results have the same biases as the official Google T5  implementation.
+These results have the same biases as the official Google T5 implementation.
+
+_Note: HF's implementation encounters an out-of-bounds error at `length<4`, whereas Google's implementation does not._
 
 ## How do we fix it?
 
@@ -141,13 +143,24 @@ generating 10 noise masks for seq length 31:
 
 ### Encouraging randomness in `length<=30`
 
-Proposal is:
+The root cause of the problem is that `_random_segmentation` only succeeds for `num_noise_spans>1`.
+
+**[idea 1]: impose a minimum number of noise spans**
+
+We could impose a minimum of 2 spans:
 
 ```diff
 - # avoid degeneracy by ensuring positive number of noise spans
 - num_noise_spans: int = max(num_noise_spans, 1)
 + # avoid degeneracy by ensuring segmentable number of noise spans
 + num_noise_spans: int = max(num_noise_spans, 2)
+```
+
+We'd also need to ensure we have at least as many noise tokens as we have spans:
+
+```diff
+- num_noise_tokens = int(np.round(length * noise_density))
++ num_noise_tokens = int(max(np.round(length * noise_density), 2))
 ```
 
 This recovers randomness in the length=30 result:
@@ -166,10 +179,27 @@ generating 10 noise masks for seq length 30:
 000000000000110000000000000011
 ```
 
-I am not sure whether it preserves other guarantees like noise density and mean noise span length, so requires a bit more thought.
+I think however it risks creating more noise than requested.
 
-It **does. however** introduce new problems (shape mismatches) at about `length<10`, so some guards will be needed. to make it safe.  
-_Note: HF's numpy implementation explodes at `length<5` even before we worsen the problem with our patch, so we will want to put in safeguards against that situation too._
+**[idea 2]: special case for `num_noise_spans==1`**
+
+After computing the final value for `num_noise_spans`, we can add a special case for `num_noise_spans==1`:
+
+```python
+if num_noise_spans == 1:
+  # we do not have a segmentable number of noise spans, so _random_segmentation would give a non-random result (puts span at end-of-sequence)
+  mask: NDArray = np.zeros((length,), dtype=np.bool_)
+  start_noise_ix: int = randint(0, length-1)
+  noise_indices: NDArray = np.fmod(np.arange(start_noise_ix, start_noise_ix + num_noise_tokens), length)
+  np.put_along_axis(mask, values=True, indices=noise_indices, axis=-1)
+  return mask
+```
+
+This takes advantage of the fact that "one span" is a _far_ easier problem.  
+We just write a run of `num_noise_tokens` starting at a random index.  
+We use `np.fmod(…, length)` to enable wrap-around if we go past the end of the sequence.
+
+This preserves the guarantee of writing the correct number of spans and noise tokens. It also fix's HF's out-of-bounds error for `length<4`.
 
 ### Eliminating end-of-sequence bias
 

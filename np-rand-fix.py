@@ -46,15 +46,23 @@ def random_spans_noise_mask(
   """
   orig_length: int = length
 
-  num_noise_tokens = int(max(np.round(length * noise_density), 2))
+  num_noise_tokens = int(np.round(length * noise_density))
   num_nonnoise_tokens: int = length - num_noise_tokens
-  # avoid degeneracy by ensuring segmentable numbers of noise and nonnoise tokens.
-  num_noise_tokens = min(num_noise_tokens, length - 1)
+  # avoid degeneracy by ensuring positive numbers of noise and nonnoise tokens.
+  num_noise_tokens = min(max(num_noise_tokens, 1), length - 1)
   # num_noise_tokens should be less than num_noise_tokens and num_nonnoise_tokens
   num_noise_spans = int(np.round(min(num_noise_tokens, num_nonnoise_tokens) / mean_noise_span_length))
 
-  # avoid degeneracy by ensuring segmentable number of noise spans
-  num_noise_spans: int = max(num_noise_spans, 2)
+  # avoid degeneracy by ensuring positive number of noise spans
+  num_noise_spans: int = max(num_noise_spans, 1)
+
+  if num_noise_spans == 1:
+    # we do not have a segmentable number of noise spans, so _random_segmentation would give a non-random result (puts span at end-of-sequence)
+    mask: NDArray = np.zeros((length,), dtype=np.bool_)
+    start_noise_ix: int = randint(0, length-1)
+    noise_indices: NDArray = np.fmod(np.arange(start_noise_ix, start_noise_ix + num_noise_tokens), length)
+    np.put_along_axis(mask, values=True, indices=noise_indices, axis=-1)
+    return mask
 
   noise_span_lengths: NDArray = _random_segmentation(num_noise_tokens, num_noise_spans)
   nonnoise_span_lengths: NDArray = _random_segmentation(num_nonnoise_tokens, num_noise_spans)
@@ -74,7 +82,7 @@ def random_spans_noise_mask(
 noise_density=.15
 mean_noise_span_length=3.
 attempts=10
-for length in [3]:
+for length in [30, 31]:
   print(f'generating {attempts} noise masks for seq length {length}:')
   for _ in range(attempts):
     mask = random_spans_noise_mask(length=length, noise_density=noise_density, mean_noise_span_length=mean_noise_span_length)
