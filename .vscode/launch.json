@@ -1,0 +1,11 @@
+{
+  "configurations": [
+    {
+      "name": "Python: TensorFlow rand",
+      "type": "python",
+      "request": "launch",
+      "module": "tf-rand",
+      "justMyCode": true
+    }
+  ]
+}
